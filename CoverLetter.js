@@ -1,5 +1,9 @@
-/* ========= p5.js vine sketch ========== */
-const palette = ['#173F35', '#2E8F44', '#9CD442', '#FFF6BF']; // dark → light
+// Cover Letter for John Provencher:
+// Interactive vines and flowers, with a click-to-open envelope
+// Created by Isaac Monheit with the help of p5.js and ChatGPT
+// Last edited on: 2025-6-19
+
+const palette = ['#173F35', '#2E8F44', '#9CD442', '#FFF6BF'];
 const PIX = 6;          // pixel size for chunky look
 const NUM_VINES     = 40;      // fewer vines → fewer draw calls
 const SHIFT_AMP     = 9;   // pixel wiggle amplitude for the “shifting” effect
@@ -26,28 +30,26 @@ const PAPER_FLOAT_AMP = 2;   // vertical bob amplitude for the paper modal
 let   envelope   = {x:0,y0:0, scale:1};
 let   showLetter = false;
 let   letterAnim = 0;     // 0 = closed, 1 = fully open
-let letterText = '';   // global for the modal’s text
+let   letterText = '';   // global for the modal’s text
 
-let   start = true;
+let start = true;
 let envelopeImg;
 let paperImg;
 let letterDiv;
 
 function preload() {
-  envelopeImg = loadImage('envelope.png');
-  paperImg = loadImage('paper.jpg');
-
-  
-  letterDiv = createDiv('');
-  letterDiv.style('position', 'absolute');
-  letterDiv.style('overflow-y', 'auto');
-  letterDiv.style('white-space', 'pre-wrap');
-  letterDiv.style('font-family', 'Courier New');
-  letterDiv.style('font-size', '16px');
-  letterDiv.style('padding', '40px');
-  letterDiv.style('z-index', '50');   // above the canvas
-  letterDiv.style('pointer-events', 'auto'); // allow clicks
-  letterDiv.hide();
+    envelopeImg = loadImage('envelope.png');
+    paperImg = loadImage('paper.jpg');
+    letterDiv = createDiv('');
+    letterDiv.style('position', 'absolute');
+    letterDiv.style('overflow-y', 'auto');
+    letterDiv.style('white-space', 'pre-wrap');
+    letterDiv.style('font-family', 'Courier New');
+    letterDiv.style('font-size', '16px');
+    letterDiv.style('padding', '40px');
+    letterDiv.style('z-index', '50');   // above the canvas
+    letterDiv.style('pointer-events', 'auto'); // allow clicks
+    letterDiv.hide();
 }
 
 let pg;                        // off‑screen low‑res buffer
@@ -55,64 +57,59 @@ let vinePts = [];
 let flowers = [];
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  pixelDensity(1);                 // <-- add this
+    createCanvas(windowWidth, windowHeight);
+    pixelDensity(1);                
 
-  envelope.x  = width * 0.5;
-  envelope.y0 = height * 0.5;   // lower‑middle
-  pg = createGraphics(Math.ceil(windowWidth / SCALE_FACTOR),
-                      Math.ceil(windowHeight / SCALE_FACTOR));
-  pg.pixelDensity(1);
-  pg.rectMode(CENTER);
-  noStroke();
-  if (start) {
-    regenerateAll();
-  }
-  start = false;
+    envelope.x  = width * 0.5;
+    envelope.y0 = height * 0.5; 
+    pg = createGraphics(Math.ceil(windowWidth / SCALE_FACTOR),
+                        Math.ceil(windowHeight / SCALE_FACTOR));
+    pg.pixelDensity(1);
+    pg.rectMode(CENTER);
+    noStroke();
+    if (start) {
+        regenerateAll();
+    }
+    start = false;
 }
 
-
-
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  // Reposition envelope to center
-  envelope.x  = width * 0.5;
-  envelope.y0 = height * 0.5;
-  // Resize off-screen buffer if initialized
-  if (pg) {
-    pg.resizeCanvas(Math.ceil(windowWidth / SCALE_FACTOR),
-                    Math.ceil(windowHeight / SCALE_FACTOR));
-    pg.rectMode(CENTER);
-  }
-  regenerateAll();
+    resizeCanvas(windowWidth, windowHeight);
+    // Reposition envelope to center
+    envelope.x  = width * 0.5;
+    envelope.y0 = height * 0.5;
+    // Resize off-screen buffer if initialized
+    if (pg) {
+        pg.resizeCanvas(Math.ceil(windowWidth / SCALE_FACTOR),
+                        Math.ceil(windowHeight / SCALE_FACTOR));
+        pg.rectMode(CENTER);
+    }
+    regenerateAll();
 }
 
 function draw() {
-  // render to low‑res buffer
-//   regenerateAll();
-  pg.background('#444444');
-  drawVine(pg);
-  drawFlowers(pg);
+    pg.background('#444444');
+    drawVine(pg);
+    drawFlowers(pg);
 
-  // floating & hover envelope
-  const envY = envelope.y0 + sin(frameCount * 0.05) * FLOAT_AMP;
-  const dEnv = dist(mouseX, mouseY, envelope.x, envY);
-  const targetScale = dEnv < ENV_W * 0.6 ? ENV_GROW : 1;
-  envelope.scale = lerp(envelope.scale, targetScale, 0.15);
+    // floating & hover envelope
+    const envY = envelope.y0 + sin(frameCount * 0.05) * FLOAT_AMP;
+    const dEnv = dist(mouseX, mouseY, envelope.x, envY);
+    const targetScale = dEnv < ENV_W * 0.6 ? ENV_GROW : 1;
+    envelope.scale = lerp(envelope.scale, targetScale, 0.15);
 
-  // ease SCALE_FACTOR toward its target
-  scaleNow = lerp(scaleNow, scaleTarget, 0.08);
-  SCALE_FACTOR = round(scaleNow);    // keep it an integer for pg buffer
+    // ease SCALE_FACTOR toward its target
+    scaleNow = lerp(scaleNow, scaleTarget, 0.08);
+    SCALE_FACTOR = round(scaleNow);    // keep it an integer for pg buffer
 
-    // if the integer actually changed, rebuild the buffer once
-  if (pg.width !== ceil(windowWidth / SCALE_FACTOR)) {
-    pg.resizeCanvas(ceil(windowWidth / SCALE_FACTOR),
-                    ceil(windowHeight / SCALE_FACTOR));
-    pg.rectMode(CENTER);
-    // regenerateAll();
-  }
+        // if the integer actually changed, rebuild the buffer once
+    if (pg.width !== ceil(windowWidth / SCALE_FACTOR)) {
+        pg.resizeCanvas(ceil(windowWidth / SCALE_FACTOR),
+                        ceil(windowHeight / SCALE_FACTOR));
+        pg.rectMode(CENTER);
+    }
 
-  // draw the looping MOV in place of the pixel envelope
+    // draw the looping MOV in place of the pixel envelope
     // Envelope with drop shadow in pg buffer
     const imgW = ENV_W * envelope.scale;
     const imgH = ENV_H * envelope.scale;
@@ -128,292 +125,296 @@ function draw() {
             imgW / SCALE_FACTOR,
             imgH / SCALE_FACTOR);
     ctxPg.restore();
-  // copy to main canvas, scaled up without smoothing
-  noSmooth();
-  image(pg, 0, 0, width, height);
+    // copy to main canvas, scaled up without smoothing
+    noSmooth();
+    image(pg, 0, 0, width, height);
 
-  // ----- modal animation -----
-  const targetLetter = showLetter ? 1 : 0;
-  letterAnim = lerp(letterAnim, targetLetter, 0.1);
+    // ----- modal animation -----
+    const targetLetter = showLetter ? 1 : 0;
+    letterAnim = lerp(letterAnim, targetLetter, 0.1);
 
 
-   if (letterAnim > 0.02) {
-     push();
-     noStroke();
-     imageMode(CENTER);
-    // Paper now anchored 10 % from the top and stretches to the bottom
-    const topMargin = height * 0.20;          // 10 % top margin
-    const w  = width * 0.7 * letterAnim;      // keep 90 % width
-    const h  = (height - topMargin) * letterAnim; // fill down to bottom
-    const bob = Math.round(sin(frameCount * 0.05) * PAPER_FLOAT_AMP * letterAnim);
+    if (letterAnim > 0.02) {
+        push();
+        noStroke();
+        imageMode(CENTER);
 
-    // Paper’s vertical center is at topMargin + h/2 plus bob
-    const paperY = Math.round(topMargin + h / 2 + bob);
-     // Paper modal with drop shadow
-     const ctxMain = drawingContext;
-     ctxMain.save();
-     ctxMain.shadowOffsetX = 10;
-     ctxMain.shadowOffsetY = 10;
-     ctxMain.shadowBlur    = 12;
-     ctxMain.shadowColor   = 'rgba(0,0,0,0.5)';
-     tint(255, 255 * letterAnim);
-     image(paperImg, width/2, paperY, w, h);
-     noTint();
-     ctxMain.restore();
-     imageMode(CORNER);
+        const topMargin = height * 0.20;          // 10 % top margin
+        const w  = width * 0.7 * letterAnim;      // keep 90 % width
+        const h  = (height - topMargin) * letterAnim; // fill down to bottom
+        const bob = Math.round(sin(frameCount * 0.05) * PAPER_FLOAT_AMP * letterAnim);
 
-    if (showLetter) {
-      const paperLeft = width / 2 - w / 2;
-      const paperTop  = paperY - h / 2;
+        // Paper’s vertical center is at topMargin + h/2 plus bob
+        const paperY = Math.round(topMargin + h / 2 + bob);
+        // Paper modal with drop shadow
+        const ctxMain = drawingContext;
+        ctxMain.save();
+        ctxMain.shadowOffsetX = 10;
+        ctxMain.shadowOffsetY = 10;
+        ctxMain.shadowBlur    = 12;
+        ctxMain.shadowColor   = 'rgba(0,0,0,0.5)';
+        tint(255, 255 * letterAnim);
+        image(paperImg, width/2, paperY, w, h);
+        noTint();
+        ctxMain.restore();
+        imageMode(CORNER);
 
-      const pad = 40;            // fixed 40 px margin on every side
-      const innerX = paperLeft + pad;
-      const innerY = paperTop  + pad;
-      const innerW = w - pad * 4;   // symmetrical left & right margins
-      //   const rawH = h - pad * 2;
-      //   const maxInnerH = height - innerY - pad;
-      const innerH = h - pad * 4;   // simply fill to bottom inside paper
+        if (showLetter) {
+            const paperLeft = width / 2 - w / 2;
+            const paperTop  = paperY - h / 2;
 
-      letterDiv.position(innerX, innerY);
-      letterDiv.size(innerW, innerH);
-      // Ensure overflow is hidden and enable vertical scroll
-      letterDiv.style('overflow', 'hidden');
-      letterDiv.style('overflow-y', 'auto');
-      // Add custom scrollbar styling
-      letterDiv.style('scrollbar-width', 'thin');
-      letterDiv.style('scrollbar-color', '#888 transparent');
-      letterDiv.html(letterText);
-      letterDiv.show();
+            const pad = 40;            // fixed 40 px margin on every side
+            const innerX = paperLeft + pad;
+            const innerY = paperTop  + pad;
+            const innerW = w - pad * 4;   // symmetrical left & right margins
+            const innerH = h - pad * 4;   // simply fill to bottom inside paper
 
-      // Add visual scroll hint
-      if (showLetter && letterDiv.elt.scrollHeight > letterDiv.elt.clientHeight) {
-        let scrollHint = document.getElementById('scrollHint');
-        if (!scrollHint) {
-          scrollHint = document.createElement('div');
-          scrollHint.id = 'scrollHint';
-          scrollHint.innerText = '↓';
-          scrollHint.style.position = 'fixed';
-          scrollHint.style.fontSize = '24px';
-          scrollHint.style.color = 'rgba(0, 0, 0, 1)';
-          scrollHint.style.left = '50%';
-          scrollHint.style.bottom = '10px';
-          scrollHint.style.transform = 'translateX(-50%)';
-          scrollHint.style.pointerEvents = 'none';
-          scrollHint.style.zIndex = '9999';
-          document.body.appendChild(scrollHint);
+            letterDiv.position(innerX, innerY);
+            letterDiv.size(innerW, innerH);
+
+            // Ensure overflow is hidden and enable vertical scroll
+            letterDiv.style('overflow', 'hidden');
+            letterDiv.style('overflow-y', 'auto');
+            
+            // Add custom scrollbar styling
+            letterDiv.style('scrollbar-width', 'thin');
+            letterDiv.style('scrollbar-color', '#888 transparent');
+            letterDiv.html(letterText);
+            letterDiv.show();
+
+            // Add visual scroll hint
+            if (showLetter && letterDiv.elt.scrollHeight > letterDiv.elt.clientHeight) {
+                let scrollHint = document.getElementById('scrollHint');
+                if (!scrollHint) {
+                    scrollHint = document.createElement('div');
+                    scrollHint.id = 'scrollHint';
+                    scrollHint.innerText = '↓';
+                    scrollHint.style.position = 'fixed';
+                    scrollHint.style.fontSize = '24px';
+                    scrollHint.style.color = 'rgba(0, 0, 0, 1)';
+                    scrollHint.style.left = '50%';
+                    scrollHint.style.bottom = '10px';
+                    scrollHint.style.transform = 'translateX(-50%)';
+                    scrollHint.style.pointerEvents = 'none';
+                    scrollHint.style.zIndex = '9999';
+                    document.body.appendChild(scrollHint);
+                }
+            } else {
+                const existing = document.getElementById('scrollHint');
+                if (existing) existing.remove();
+            }
+
+            // --- CLIP drawing context for text ---
+            drawingContext.save();
+            drawingContext.beginPath();
+            drawingContext.rect(innerX, innerY, innerW, innerH);
+            drawingContext.clip();
+            drawingContext.restore();
+        } else {
+            letterDiv.hide();
+            const existing = document.getElementById('scrollHint');
+            if (existing) existing.remove();
         }
-      } else {
-        const existing = document.getElementById('scrollHint');
-        if (existing) existing.remove();
-      }
+        letterText = `Dear John Provencher,
 
-      // --- CLIP drawing context for text ---
-      drawingContext.save();
-      drawingContext.beginPath();
-      drawingContext.rect(innerX, innerY, innerW, innerH);
-      drawingContext.clip();
+My name is Isaac Monheit, and I am an artist and software engineer who works between, in, and around different digital and physical media. As both a test of my JavaScript proficiency and a nod to your work, I created this whole website from scratch in the last 36 hours as a part of the application. 
 
-      drawingContext.restore();
-    } else {
-      letterDiv.hide();
-      const existing = document.getElementById('scrollHint');
-      if (existing) existing.remove();
-    }
+I've fallen in love with the possibility for code to operate as a visual language. I've written many involved Touchdesigner programs that combine Python, Ableton Live, and Mediapipe hand/body/face/object tracking into kinetic works that behave synesthetically. I have also gained an <a href="https://www.instagram.com/zonk_music/" target="_blank" style="color:blue; text-decoration:underline;">Instagram</a> following for these projects. I have professional experience as a front-end developer working with JavaScript at Autism Smiles, and I have created <a href="https://clownfish-app-w3bmr.ondigitalocean.app/" target="_blank" style="color:blue; text-decoration:underline;">artistic websites</a> using JavaScript as well. 
 
-    letterText = ``;
+My true passion in coding lies in art, and the possibility of human connection through it. I find joy in witnessing others interact with my works that merge visuals, motion, and audio into one concise experience. That is why your art has been especially inspiring to me. Your digital renderings, while displayed on a 2D screen, contain so much feeling, expression, and motion. In a world where it feels like there are two distinct realities that are drifting apart, physical and digital, your work is a tether, pulling against these immense forces and merging the realities back together.
 
+I believe I am an excellent candidate to be your assistant because I am very quick at adapting to new codebases and systems, I love asking questions and understanding new topics, and most importantly, I'm very excited to learn from you. I really admire that your work feels concise, complete, and that you have your own recognizable style. As someone who feels like I'm just dipping my pinky toe into this vast plane of interdisciplinary art, I have so much room to grow and change, and I would love for the opportunity to work with you to inspire that change.
+
+Here is my <a href="IsaacMonheit-Resume.pdf" target="_blank" style="color:blue; text-decoration:underline;">resume(PDF)</a> for you to look over. Please let me know if you have any questions. 
+
+Thank you for your time and consideration,
+Isaac Monheit
+
+<small><i>If clicking on links doesn't work, try right-click and "Open Link in New Tab"<i><small>
+`;
     }
 }
 
 // Generate one vine that starts off‑screen and walks until it exits off‑screen on ANY edge
 function generateVine() {
-  // pick a starting edge
-  const edge = floor(random(4)); // 0=L,1=R,2=T,3=B
-  let x, y, heading;
-  if (edge === 0) { // left
-    x = -MARGIN;
-    y = random(height);
-    heading = random(-PI / 4, PI / 4);            // roughly rightward
-  } else if (edge === 1) { // right
-    x = width + MARGIN;
-    y = random(height);
-    heading = random((3 * PI) / 4, (5 * PI) / 4); // leftward
-  } else if (edge === 2) { // top
-    x = random(width);
-    y = -MARGIN;
-    heading = random(PI / 4, (3 * PI) / 4);       // downward
-  } else { // bottom
-    x = random(width);
-    y = height + MARGIN;
-    heading = random((-3 * PI) / 4, (-PI) / 4);   // upward
-  }
+    // pick a starting edge
+    const edge = floor(random(4)); // 0=Left, 1=Right, 2=Top, 3=Bottom
+    let x, y, heading;
+    if (edge === 0) { // left
+        x = -MARGIN;
+        y = random(height);
+        heading = random(-PI / 4, PI / 4);            // rightward
+    } else if (edge === 1) { // right
+        x = width + MARGIN;
+        y = random(height);
+        heading = random((3 * PI) / 4, (5 * PI) / 4); // leftward
+    } else if (edge === 2) { // top
+        x = random(width);
+        y = -MARGIN;
+        heading = random(PI / 4, (3 * PI) / 4);       // downward
+    } else { // bottom
+        x = random(width);
+        y = height + MARGIN;
+        heading = random((-3 * PI) / 4, (-PI) / 4);   // upward
+    }
 
-  const seed = random(1000);
-  let steps = 0;
+    const seed = random(1000);
+    let steps = 0;
 
-  while (true) {
-    // store the point
-    vinePts.push({ x, y, t: steps / 5000 });
+    while (true) {
+        // store the point
+        vinePts.push({ x, y, t: steps / 5000 });
 
-    // step
-    const angle = noise(seed + steps * 0.02) * TWO_PI * 0.4 + heading;
-    x += cos(angle);
-    y += sin(angle);
-    steps++;
+        // step
+        const angle = noise(seed + steps * 0.02) * TWO_PI * 0.4 + heading;
+        x += cos(angle);
+        y += sin(angle);
+        steps++;
 
-    // stop if we've walked far off‑screen on ANY edge (not just the start edge)
-    if (x < -MARGIN || x > width + MARGIN || y < -MARGIN || y > height + MARGIN) break;
-    if (steps > 6000) break; // safety valve
-  }
+        // stop if we've walked far off‑screen on ANY edge (not just the start edge)
+        if (x < -MARGIN || x > width + MARGIN || y < -MARGIN || y > height + MARGIN) break;
+        if (steps > 6000) break; // safety valve
+    }
 }
 
 function sprinkleFlowers() {
-  for (let i = 50; i < vinePts.length; i += FLOWER_SKIP) {
-    const p = vinePts[i];
-    flowers.push({ x: p.x,
-                   y: p.y,
-                   scale: 0,
-                   angle: random(TWO_PI) });
-  }
+    for (let i = 50; i < vinePts.length; i += FLOWER_SKIP) {
+        const p = vinePts[i];
+        flowers.push({ x: p.x,
+                       y: p.y,
+                       scale: 0,
+                       angle: random(TWO_PI) });
+    }
 }
 
 // Regenerate a fresh batch of vines + flowers
 function regenerateAll() {
-  vinePts.length = 0;
-  flowers.length = 0;
-  for (let i = 0; i < NUM_VINES; i++) {
-    generateVine();
-  }
-  sprinkleFlowers();
+    vinePts.length = 0;
+    flowers.length = 0;
+    for (let i = 0; i < NUM_VINES; i++) {
+        generateVine();
+    }
+    sprinkleFlowers();
 }
 
 function drawVine(g) {
+    const ctx = g.drawingContext;
 
-  const ctx = g.drawingContext;
+    // enable a crisp drop-shadow
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    ctx.shadowBlur    = 0;
+    ctx.shadowColor   = 'rgba(0,0,0,1)';
 
-  // enable a crisp drop-shadow
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 1;
-  ctx.shadowBlur    = 0;
-  ctx.shadowColor   = 'rgba(0,0,0,1)';
+    // draw every 3rd stored pixel to reduce per‑frame operations
+    for (let i = 0; i < vinePts.length; i += STEP_SKIP) {
+        const p  = vinePts[i];
+        const dx = sin(frameCount * 0.05 + i) * SHIFT_AMP;
+        const dy = cos(frameCount * 0.05 + i) * SHIFT_AMP;
 
-  // draw every 3rd stored pixel to reduce per‑frame operations
-  for (let i = 0; i < vinePts.length; i += STEP_SKIP) {
-    const p  = vinePts[i];
-    const dx = sin(frameCount * 0.05 + i) * SHIFT_AMP;
-    const dy = cos(frameCount * 0.05 + i) * SHIFT_AMP;
+        // simple gradient along vine
+        const col = lerpColor(color(palette[1]), color(palette[2]), p.t);
 
-    // simple gradient along vine
-    const col = lerpColor(color(palette[1]), color(palette[2]), p.t);
+        const px = (p.x + dx) / SCALE_FACTOR;
+        const py = (p.y + dy) / SCALE_FACTOR;
+        const size = PIX / SCALE_FACTOR;
 
-    const px = (p.x + dx) / SCALE_FACTOR;
-    const py = (p.y + dy) / SCALE_FACTOR;
-    const size = PIX / SCALE_FACTOR;
+        // subtle shadow for depth
+        // g.fill(0, 50); // translucent black
+        // g.rect(px + 2, py + 2, size, size);
 
-    // subtle shadow for depth
-    // g.fill(0, 50); // translucent black
-    // g.rect(px + 2, py + 2, size, size);
+        // outline
+        g.fill(col);
+        g.noStroke();
+        // g.stroke(0);
+        // g.strokeWeight(1);
+        g.rect(px, py, size, size);
 
-    // main pixel
-    // g.fill(col);
-    // g.rect(px, py, size, size);
-
-    // outline
-    // main pixel with outline (one draw call)
-    g.fill(col);
-    g.noStroke();
-    // g.stroke(0);
-    // g.strokeWeight(1);
-    g.rect(px, py, size, size);
-
-  }
-  ctx.shadowColor = 'rgba(0,0,0,0)';
+    }
+    ctx.shadowColor = 'rgba(0,0,0,0)';
 }
 
 // Draw a simple 5-square flower: center + 4 petals
 function drawPixelFlower(g, scale, petalCol, centerCol) {
-  if (scale < 0.05) return;
+    if (scale < 0.05) return;
 
-  const unit = PIX / SCALE_FACTOR * scale;
-  const pts = [
-    [ 0,  0, centerCol],   // center
-    [-1,  0, petalCol],    // left
-    [ 1,  0, petalCol],    // right
-    [ 0, -1, petalCol],    // top
-    [ 0,  1, petalCol]     // bottom
-  ];
-  pts.forEach(([ox, oy, col]) => {
-    const x = ox * unit;
-    const y = oy * unit;
-    g.fill(col);
-    g.rect(x, y, unit, unit);
-    g.noFill();
-    g.strokeWeight(1);
-    g.stroke(0);
-    g.rect(x, y, unit, unit);
-    g.noStroke();
-  });
+    const unit = PIX / SCALE_FACTOR * scale;
+    const pts = [
+        [ 0,  0, centerCol],   // center
+        [-1,  0, petalCol],    // left
+        [ 1,  0, petalCol],    // right
+        [ 0, -1, petalCol],    // top
+        [ 0,  1, petalCol]     // bottom
+    ];
+    pts.forEach(([ox, oy, col]) => {
+        const x = ox * unit;
+        const y = oy * unit;
+        g.fill(col);
+        g.rect(x, y, unit, unit);
+        g.noFill();
+        g.strokeWeight(1);
+        g.stroke(0);
+        g.rect(x, y, unit, unit);
+        g.noStroke();
+    });
 }
 
 // Draw a pixel-art envelope with two opposing triangles (flap + base)
 function drawEnvelope(g, cx, cy, w, h, scale = 1) {
-  w *= scale;
-  h *= scale;
+    w *= scale;
+    h *= scale;
 }
 
 function drawFlowers(g) {
-  flowers.forEach((f, idx) => {
-    // --- update state -------------------------------------------------
-    const d       = dist(mouseX, mouseY, f.x, f.y);
-    const target  = d < FLOWER_NEAR ? FLOWER_GROW : 0;
-    f.scale       = lerp(f.scale, target, 0.07);   // smooth approach
-    f.angle      += 0.05;                          // constant spin
+    flowers.forEach((f, idx) => {
+        // update state
+        const d       = dist(mouseX, mouseY, f.x, f.y);
+        const target  = d < FLOWER_NEAR ? FLOWER_GROW : 0;
+        f.scale       = lerp(f.scale, target, 0.07);   // smooth approach
+        f.angle      += 0.05;                          // constant spin
 
-    // --- choose colours ----------------------------------------------
-    const petalCol  = FLOWER_COLORS[idx % FLOWER_COLORS.length];
-    const centerCol = lerpColor(color(petalCol), color('#000000'), 0.2);
+        // choose colors
+        const petalCol  = FLOWER_COLORS[idx % FLOWER_COLORS.length];
+        const centerCol = lerpColor(color(petalCol), color('#000000'), 0.2);
 
-    // --- draw ---------------------------------------------------------
-    g.push();
-    g.translate(f.x / SCALE_FACTOR, f.y / SCALE_FACTOR);
-    g.rotate(f.angle);
-    drawPixelFlower(g, f.scale, petalCol, centerCol);
-    g.pop();
-  });
+        // draw the flower
+        g.push();
+        g.translate(f.x / SCALE_FACTOR, f.y / SCALE_FACTOR);
+        g.rotate(f.angle);
+        drawPixelFlower(g, f.scale, petalCol, centerCol);
+        g.pop();
+    });
 }
 
 function mousePressed() {
-  const envY  = envelope.y0 + sin(frameCount * 0.05) * FLOAT_AMP;
-  const halfW = (ENV_W * envelope.scale) / 2;
-  const halfH = (ENV_H * envelope.scale) / 2;
+    const envY  = envelope.y0 + sin(frameCount * 0.05) * FLOAT_AMP;
+    const halfW = (ENV_W * envelope.scale) / 2;
+    const halfH = (ENV_H * envelope.scale) / 2;
 
-  const hit = mouseX > envelope.x - halfW && mouseX < envelope.x + halfW &&
-              mouseY > envY     - halfH && mouseY < envY     + halfH;
+    const hit = mouseX > envelope.x - halfW && mouseX < envelope.x + halfW &&
+                mouseY > envY     - halfH && mouseY < envY     + halfH;
 
-  if (!showLetter && hit) {
-    showLetter  = true;
-    // textScroll = 0;      // reset scroll to top when opening
-    scaleTarget = 6;          // zoom to chunky pixels
-  } else if (showLetter) {
-    // Only close if click is outside the letter box
-    const w = width * 0.7;
-    const h = height * 1;
-    const left   = width/2 - w/2;
-    const right  = width/2 + w/2;
-    const top    = height/2 - h/2 + height * 0.20;
-    const bottom = height/2 + h/2;
+    if (!showLetter && hit) {
+        showLetter  = true;
+        scaleTarget = 6;          // zoom to chunky pixels
+    } else if (showLetter) {
+        const w = width * 0.7;
+        const h = height * 1;
+        const left   = width/2 - w/2;
+        const right  = width/2 + w/2;
+        const top    = height/2 - h/2 + height * 0.20;
+        const bottom = height/2 + h/2;
 
-    if (mouseX < left || mouseX > right || mouseY < top || mouseY > bottom) {
-      showLetter  = false;
-      scaleTarget = 1;
+        if (mouseX < left || mouseX > right || mouseY < top || mouseY > bottom) {
+        showLetter  = false;
+        scaleTarget = 1;
+        }
     }
-  }
 }
 
-
 function keyPressed() {
-  if (keyCode === ESCAPE && showLetter) {
-    showLetter = false;
-    scaleTarget = 1;
-  }
+    if (keyCode === ESCAPE && showLetter) {
+        showLetter = false;
+        scaleTarget = 1;
+    }
 }
