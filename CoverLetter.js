@@ -225,7 +225,7 @@ My true passion in coding lies in art, and the possibility of human connection t
 
 I believe I am an excellent candidate to be your assistant because I am very quick at adapting to new codebases and systems, I love asking questions and understanding new topics, and most importantly, I'm very excited to learn from you. I really admire that your work feels concise, complete, and that you have your own recognizable style. As someone who feels like I'm just dipping my pinky toe into this vast plane of interdisciplinary art, I have so much room to grow and change, and I would love for the opportunity to work with you to inspire that change.
 
-Here is my <a href="IsaacMonheit-Resume.pdf" target="_blank" style="color:blue; text-decoration:underline;">resume(PDF)</a> for you to look over. Please let me know if you have any questions. 
+Here is my <a href="https://github.com/isaacmonheit/cover_letter_for_John_Provencher/blob/main/IsaacMonheit-resume.pdf" target="_blank" style="color:blue; text-decoration:underline;">resume(PDF)</a> for you to look over. Please let me know if you have any questions. 
 
 Thank you for your time and consideration,
 Isaac Monheit
